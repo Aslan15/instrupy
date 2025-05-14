@@ -71,7 +71,18 @@ class InstrumentModelFactory:
         creator = self._creators.get(_type)
         if not creator:
             raise ValueError(_type)
-        return creator.from_dict(specs)
+        model = creator.from_dict(specs)
+
+        model_dict = dict(model.__dict__)
+        exising_attributes = model_dict.keys()
+        missing_attributes = [key for key in specs.keys() 
+                             if key not in exising_attributes
+                             and "@" not in key
+                             and "field" not in key] 
+        for missing_attribute in missing_attributes:
+            setattr(model, missing_attribute, specs[missing_attribute])
+
+        return model
 
 class Instrument(Entity):
     """Main class used to initialize instruments with consideration of multiple operating modes. 

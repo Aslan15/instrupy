@@ -416,9 +416,11 @@ class PassiveOpticalScannerModel(Entity):
         if abs(x-1) < 1e-7:
             x=1
         look_angle = np.arccos(x)
+        look_angle_deg = np.rad2deg(look_angle)
         
         incidence_angle_rad = np.arcsin(np.sin(look_angle)*(Constants.radiusOfEarthInKM + alt_km)/Constants.radiusOfEarthInKM)
-        
+        incidence_angle_deg =  np.rad2deg(incidence_angle_rad)
+
         range_vec_norm_km = np.linalg.norm(range_vector_km)
 
         # Calculate FOV of a single detector, i.e. the IFOV (instantaneous FOV) as referred in texts.
@@ -470,8 +472,26 @@ class PassiveOpticalScannerModel(Entity):
             NEdeltaT = np.inf
         else:    
             NEdeltaT = Nn/ deltaN     
+
+        # Solar zenith angle
+        [solar_zenith, solar_distance] = GeoUtilityFunctions.compute_sun_zenith(tObs_JDUT1, target_pos)
+        if solar_zenith is not None:
+            solar_zenith_deg =  np.rad2deg(solar_zenith)
+        else:
+            solar_zenith_deg = np.nan
+
+        # assign sign to look-angle. 
+        # positive sign => Positive sign => look is in positive half-space made by the orbit-plane (i.e. orbit plane normal vector) and vice-versa.
+        orbit_normal = np.cross(sc_pos, sc_vel)
+        sgn = np.sign(np.dot(range_vector_km, orbit_normal))
+        if(sgn==0):
+            sgn = 1
     
         obsv_metrics = {}
+        obsv_metrics["observation range [km]"] = round(range_vec_norm_km,1)
+        obsv_metrics["look angle [deg]"] = round(sgn*look_angle_deg, 2)
+        obsv_metrics["incidence angle [deg]"] = round(incidence_angle_deg, 2)
+        obsv_metrics["solar zenith [deg]"] = round(solar_zenith_deg, 2)
         obsv_metrics["ground pixel along-track resolution [m]"] = round(res_AT_m, 2)
         obsv_metrics["ground pixel cross-track resolution [m]"] = round(res_CT_m, 2)
         obsv_metrics["SNR"] = round(SNR, 2)
