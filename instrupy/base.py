@@ -6,10 +6,13 @@
             to be used as primary means of instrument initialization.*
 
 """
+from instrupy.altimeter_model import AltimeterSensorModel
 from instrupy.util import Entity
 import uuid
 from collections import namedtuple
 import copy
+
+from instrupy.vnir_imager import VNIRSensorModel
 
 from .basic_sensor_model import BasicSensorModel
 from .passive_optical_scanner_model import PassiveOpticalScannerModel
@@ -42,6 +45,8 @@ class InstrumentModelFactory:
         self.register_instrument_model('Passive Optical Scanner', PassiveOpticalScannerModel)
         self.register_instrument_model('Synthetic Aperture Radar', SyntheticApertureRadarModel)
         self.register_instrument_model('Radiometer', RadiometerModel)
+        self.register_instrument_model('VNIR', VNIRSensorModel)
+        self.register_instrument_model('Altimeter', AltimeterSensorModel)
 
     def register_instrument_model(self, _type, creator):
         """ Function to register instruments.

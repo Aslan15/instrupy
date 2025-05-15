@@ -267,11 +267,11 @@ class BasicSensorModel(Entity):
         incidence_angle_deg =  np.rad2deg(incidence_angle)
 
         # Solar zenith angle
-        [solar_zenith, solar_distance] = GeoUtilityFunctions.compute_sun_zenith(tObs_JDUT1, target_pos)
-        if solar_zenith is not None:
-            solar_zenith_deg =  np.rad2deg(solar_zenith)
-        else:
-            solar_zenith_deg = np.nan
+        # [solar_zenith, solar_distance] = GeoUtilityFunctions.compute_sun_zenith(tObs_JDUT1, target_pos)
+        # if solar_zenith is not None:
+        #     solar_zenith_deg =  np.rad2deg(solar_zenith)
+        # else:
+        #     solar_zenith_deg = np.nan
 
         # assign sign to look-angle. 
         # positive sign => Positive sign => look is in positive half-space made by the orbit-plane (i.e. orbit plane normal vector) and vice-versa.
@@ -284,7 +284,7 @@ class BasicSensorModel(Entity):
         obsv_metrics["observation range [km]"] = round(range_km,1)
         obsv_metrics["look angle [deg]"] = round(sgn*look_angle_deg, 2)
         obsv_metrics["incidence angle [deg]"] = round(incidence_angle_deg, 2)
-        obsv_metrics["solar zenith [deg]"] = round(solar_zenith_deg, 2)
+        # obsv_metrics["solar zenith [deg]"] = round(solar_zenith_deg, 2)
 
         return obsv_metrics
 
