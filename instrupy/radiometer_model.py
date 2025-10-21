@@ -1808,11 +1808,19 @@ class RadiometerModel(Entity):
 
         # Calculate look angle to the target location
         look_angle = np.arccos(np.dot(MathUtilityFunctions.normalize(range_vector_km), -1*MathUtilityFunctions.normalize(sc_pos)))
+        look_angle_deg = np.rad2deg(look_angle)
         #print('look_angle', np.rad2deg(look_angle))
         
         # Look angle to corresponding incidence angle conversion for spherical Earth (incidence angle at the target location)
         incidence_angle = np.arcsin(np.sin(look_angle)*(Constants.radiusOfEarthInKM + alt_km)/Constants.radiusOfEarthInKM)
         #print('incidence_angle', np.rad2deg(incidence_angle))
+
+        range_vector_km = target_pos - sc_pos
+        range_km = np.linalg.norm(range_vector_km)
+
+        orbit_normal = np.cross(sc_pos, sc_vel)
+        sgn = np.sign(np.dot(range_vector_km, orbit_normal))
+        if(sgn==0): sgn = 1
 
         ############## Calculate the pixel resolution. ##############
         # The size of the antenna footprint at the target-location corresponds to the pixel dimensions. It is assumed that
@@ -1834,47 +1842,49 @@ class RadiometerModel(Entity):
         
         ############## calculate the radiometric resolution ##############
         # calculate the dwell time per ground-pixel
-        sat_speed_mps = GeoUtilityFunctions.compute_satellite_footprint_speed(sc_pos, sc_vel)
+        # sat_speed_mps = GeoUtilityFunctions.compute_satellite_footprint_speed(sc_pos, sc_vel)
         #print("res_AT_m, sat_speed_mps", res_AT_m, sat_speed_mps)
-        td = self.scan.compute_dwell_time_per_ground_pixel(res_AT_m=res_AT_m, sat_speed_kmps=sat_speed_mps*1e-3, iFOV_CT_deg=iFOV_CT_deg)
+        # td = self.scan.compute_dwell_time_per_ground_pixel(res_AT_m=res_AT_m, sat_speed_kmps=sat_speed_mps*1e-3, iFOV_CT_deg=iFOV_CT_deg)
 
         #print('td', td)
-        rad_res = self.system.compute_radiometric_resolution(td, self.antenna, self.targetBrightnessTemp)
+        # rad_res = self.system.compute_radiometric_resolution(td, self.antenna, self.targetBrightnessTemp)
 
         ############## calculate beam-efficiency ##############
-        be = self.antenna.get_beam_efficiency(self.operatingFrequency)
+        # be = self.antenna.get_beam_efficiency(self.operatingFrequency)
 
         ############## Calculate the swath-width. ##############
         # The swath-width is calculated based on the instrument look angle, which may or may-not be equal to the target look angle. 
         # If the instrument look-angle = target look angle, then it implies that the target is at the middle of the swath.
-        if instru_look_angle_from_target_inc_angle is True:
-            instru_look_angle = look_angle
-        else:           
-            if (self.orientation.ref_frame==ReferenceFrame.NADIR_POINTING or self.orientation.ref_frame==ReferenceFrame.SC_BODY_FIXED):
-                # TODO: Move this snippet into a separate function,
-                # instrument look angle is calculated assuming the instrument orientation is wrt the NADIR_POINTING frame
-                # through either (1) direct specification or (2) the instrument is aligned to the spacecraft body which in turn is assumed aligned to the 
-                # NADIR_POINTING frame.
-                rot1 = Orientation.get_rotation_matrix(self.orientation.euler_seq1, self.orientation.euler_angle1)
-                rot2 = Orientation.get_rotation_matrix(self.orientation.euler_seq2, self.orientation.euler_angle2)
-                rot3 = Orientation.get_rotation_matrix(self.orientation.euler_seq3, self.orientation.euler_angle3)
-                # assume pointing axis is aligned to the sensor body z-axis
-                # express the pointing axis in the NADIR_POINTING frame
-                rot =  np.matmul(rot3 , np.matmul(rot2 , rot1))
-                pointing_axis_in_nadir_pointing_frame = np.matmul(rot, np.array([0,0,1]))
-                # find the angle between the nadir-vector (aligned to the z-axis of the NADIR_POINTING frame) and the pointing-vector.
-                instru_look_angle = np.arccos(np.dot(pointing_axis_in_nadir_pointing_frame, np.array([0,0,1]))) 
+        # if instru_look_angle_from_target_inc_angle is True:
+        #     instru_look_angle = look_angle
+        # else:           
+        #     if (self.orientation.ref_frame==ReferenceFrame.NADIR_POINTING or self.orientation.ref_frame==ReferenceFrame.SC_BODY_FIXED):
+        #         # TODO: Move this snippet into a separate function,
+        #         # instrument look angle is calculated assuming the instrument orientation is wrt the NADIR_POINTING frame
+        #         # through either (1) direct specification or (2) the instrument is aligned to the spacecraft body which in turn is assumed aligned to the 
+        #         # NADIR_POINTING frame.
+        #         rot1 = Orientation.get_rotation_matrix(self.orientation.euler_seq1, self.orientation.euler_angle1)
+        #         rot2 = Orientation.get_rotation_matrix(self.orientation.euler_seq2, self.orientation.euler_angle2)
+        #         rot3 = Orientation.get_rotation_matrix(self.orientation.euler_seq3, self.orientation.euler_angle3)
+        #         # assume pointing axis is aligned to the sensor body z-axis
+        #         # express the pointing axis in the NADIR_POINTING frame
+        #         rot =  np.matmul(rot3 , np.matmul(rot2 , rot1))
+        #         pointing_axis_in_nadir_pointing_frame = np.matmul(rot, np.array([0,0,1]))
+        #         # find the angle between the nadir-vector (aligned to the z-axis of the NADIR_POINTING frame) and the pointing-vector.
+        #         instru_look_angle = np.arccos(np.dot(pointing_axis_in_nadir_pointing_frame, np.array([0,0,1]))) 
 
         #print('alt_km, instru_look_angle', alt_km, instru_look_angle)
-        swath_width_km = self.scan.compute_swath_width(alt_km, np.rad2deg(instru_look_angle), self.antenna.get_spherical_geometry(self.operatingFrequency))
+        # swath_width_km = self.scan.compute_swath_width(alt_km, np.rad2deg(instru_look_angle), self.antenna.get_spherical_geometry(self.operatingFrequency))
                 
         obsv_metrics = {}
+        obsv_metrics["observation range [km]"] = round(range_km,1)
+        obsv_metrics["look angle [deg]"] = round(sgn*look_angle_deg, 2)
+        obsv_metrics["incidence angle [deg]"] = round(np.rad2deg(incidence_angle), 2) if incidence_angle is not None else np.nan
         obsv_metrics["ground pixel along-track resolution [m]"] = round(res_AT_m, 2) if res_AT_m is not None else np.nan
         obsv_metrics["ground pixel cross-track resolution [m]"] = round(res_CT_m, 2) if res_CT_m is not None else np.nan
-        obsv_metrics["swath-width [m]"] = round(swath_width_km*1e3, 2) if swath_width_km is not None else np.nan
-        obsv_metrics["sensitivity [K]"] = round(rad_res, 2) if rad_res is not None else np.nan
-        obsv_metrics["incidence angle [deg]"] = round(np.rad2deg(incidence_angle), 2) if incidence_angle is not None else np.nan
-        obsv_metrics["beam efficiency"] = round(be, 2) if be is not np.nan else np.nan
+        # obsv_metrics["swath-width [m]"] = round(swath_width_km*1e3, 2) if swath_width_km is not None else np.nan
+        # obsv_metrics["sensitivity [K]"] = round(rad_res, 2) if rad_res is not None else np.nan
+        # obsv_metrics["beam efficiency"] = round(be, 2) if be is not np.nan else np.nan
         
         return obsv_metrics
 

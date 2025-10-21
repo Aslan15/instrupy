@@ -25,3 +25,4 @@ core
 # Setuptools distribution folder.
 /dist/
 
+.venv
