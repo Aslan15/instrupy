@@ -287,6 +287,7 @@ class BasicSensorModel(Entity):
         off_nadir_axis_angle = np.arctan2(range_projection_on_orbit_normal, range_projection_on_nadir)
         off_nadir_axis_angle_deg = np.rad2deg(off_nadir_axis_angle)        
     
+        # Package observation metrics
         obsv_metrics = {}
         obsv_metrics["observation range [km]"] = round(range_km,1)
         obsv_metrics["look angle [deg]"] = round(sgn*look_angle_deg, 2)
