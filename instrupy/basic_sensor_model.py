@@ -277,14 +277,22 @@ class BasicSensorModel(Entity):
         # positive sign => Positive sign => look is in positive half-space made by the orbit-plane (i.e. orbit plane normal vector) and vice-versa.
         orbit_normal = np.cross(sc_pos, sc_vel)
         sgn = np.sign(np.dot(range_vector_km, orbit_normal))
-        if(sgn==0):
-            sgn = 1
+        if(sgn==0): sgn = 1
+
+        # Calculate off-nadir axis angle
+        range_norm = MathUtilityFunctions.normalize(range_vector_km)
+        sc_nadir_axis = -1*MathUtilityFunctions.normalize(sc_pos)
+        range_projection_on_nadir = np.dot(range_norm, sc_nadir_axis)
+        range_projection_on_orbit_normal = np.dot(range_norm, MathUtilityFunctions.normalize(orbit_normal))
+        off_nadir_axis_angle = np.arctan2(range_projection_on_orbit_normal, range_projection_on_nadir)
+        off_nadir_axis_angle_deg = np.rad2deg(off_nadir_axis_angle)        
     
         obsv_metrics = {}
         obsv_metrics["observation range [km]"] = round(range_km,1)
         obsv_metrics["look angle [deg]"] = round(sgn*look_angle_deg, 2)
         obsv_metrics["incidence angle [deg]"] = round(incidence_angle_deg, 2)
         # obsv_metrics["solar zenith [deg]"] = round(solar_zenith_deg, 2)
+        obsv_metrics["off-nadir axis angle [deg]"] = round(off_nadir_axis_angle_deg, 2)
 
         return obsv_metrics
 
