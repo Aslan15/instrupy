@@ -447,5 +447,3 @@ class BasicSensorModel(Entity):
         pixel_config = namedtuple("pixel_config", ["numberDetectorRows", "numberDetectorCols"])
 
         return pixel_config(self.numberDetectorRows, self.numberDetectorCols)
-
-
