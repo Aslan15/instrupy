@@ -90,7 +90,7 @@ class Entity(object):
             return json.dump(self.to_dict(), file, *args, **kwargs)
 
     @classmethod
-    def from_json(cls, json_doc):
+    def from_json(cls, json_doc, *args, **kwargs):
         """Parses an entity from a JSON-formatted string, dictionary, or file."""
         # convert json string or file to dictionary (if necessary)
         if isinstance(json_doc, str):
@@ -102,9 +102,9 @@ class Entity(object):
             return json_doc
         # if list, recursively parse each element and return mapped list
         if isinstance(json_doc, list):
-            return map(lambda e: cls.from_json(e), json_doc)
+            return map(lambda e: cls.from_json(e, *args, **kwargs), json_doc)
         # otherwise use class method to initialize from normalized dictionary
-        return cls.from_dict(json_doc)
+        return cls.from_dict(json_doc, *args, **kwargs)
 
     @staticmethod
     def from_dict(d):
