@@ -486,6 +486,12 @@ class PassiveOpticalScannerModel(Entity):
         sgn = np.sign(np.dot(range_vector_km, orbit_normal))
         if(sgn==0):
             sgn = 1
+
+        # Cross-track swath width using asymmetric off-nadir geometry (flat-Earth).
+        # Near/far edges are at (look_angle ∓ half_fov) from nadir; their ground ranges differ
+        # at off-nadir, so we compute each edge separately rather than doubling the center half-width.
+        half_fov_rad = np.deg2rad(self.fieldOfView.sph_geom.angle_width / 2)
+        swadth_width_km = alt_km * (np.tan(look_angle + half_fov_rad) - np.tan(look_angle - half_fov_rad))
     
         obsv_metrics = {}
         obsv_metrics["observation range [km]"] = round(range_vec_norm_km,1)
@@ -494,6 +500,7 @@ class PassiveOpticalScannerModel(Entity):
         obsv_metrics["solar zenith [deg]"] = round(solar_zenith_deg, 2)
         obsv_metrics["ground pixel along-track resolution [m]"] = round(res_AT_m, 2)
         obsv_metrics["ground pixel cross-track resolution [m]"] = round(res_CT_m, 2)
+        obsv_metrics["swath width [km]"] = round(swadth_width_km, 2)
         obsv_metrics["SNR"] = round(SNR, 2)
         obsv_metrics["dynamic range"] = round(DR, 2)
         obsv_metrics["noise-equivalent delta T [K]"] = round(NEdeltaT, 5)
