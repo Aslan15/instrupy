@@ -2,7 +2,7 @@
 import uuid
 import numpy as np
 from instrupy.basic_sensor_model import BasicSensorModel
-from instrupy.util import Constants, GeoUtilityFunctions, Maneuver, Orientation, SphericalGeometry, SyntheticDataConfiguration
+from instrupy.util import Constants, GeoUtilityFunctions, Maneuver, MathUtilityFunctions, Orientation, SphericalGeometry, SyntheticDataConfiguration
 
 
 class AltimeterSensorModel(BasicSensorModel):
@@ -83,7 +83,16 @@ class AltimeterSensorModel(BasicSensorModel):
         obsv_metrics = super().calc_data_metrics(sc_orbit_state, target_coords)
         
         c = Constants.speedOfLight
+
+        # Observation time in Julian Day UT1
+        tObs_JDUT1 = sc_orbit_state["time [JDUT1]"]
+
+        # Calculate Target cartesian position in EARTH_CENTERED_INERTIAL frame
+        target_pos = GeoUtilityFunctions.geo2eci([target_coords["lat [deg]"], target_coords["lon [deg]"], 0.0], tObs_JDUT1)
         
+        #  Calculate the range vector between spacecraft and POI (Target)
+        range_vector_km = target_pos - sc_pos
+
         # Spacecraft position in Cartesian coordinates in the EARTH_CENTERED_INERTIAL frame
         sc_pos = np.array([sc_orbit_state["x [km]"], sc_orbit_state["y [km]"], sc_orbit_state["z [km]"]])  
         sc_vel = np.array([sc_orbit_state["vx [km/s]"], sc_orbit_state["vy [km/s]"], sc_orbit_state["vz [km/s]"]])  
@@ -91,12 +100,23 @@ class AltimeterSensorModel(BasicSensorModel):
         # Ground track speed in km/s
         sat_speed_mps = GeoUtilityFunctions.compute_satellite_footprint_speed(sc_pos, sc_vel)
 
+        # Calculate accuracy and resolution metrics
         res_AT_m = sat_speed_mps * self.pulseWidth
         res_CT_m = c / (2 * self.chirpBandwidth * np.sin(np.deg2rad(obsv_metrics["incidence angle [deg]"])))
         accuracy = c * self.pulseWidth / 2
 
+        # Calculate off-nadir axis angle
+        orbit_normal = np.cross(sc_pos, sc_vel)
+        range_norm = MathUtilityFunctions.normalize(range_vector_km)
+        sc_nadir_axis = -1*MathUtilityFunctions.normalize(sc_pos)
+        range_projection_on_nadir = np.dot(range_norm, sc_nadir_axis)
+        range_projection_on_orbit_normal = np.dot(range_norm, MathUtilityFunctions.normalize(orbit_normal))
+        off_nadir_axis_angle = np.arctan2(range_projection_on_orbit_normal, range_projection_on_nadir)
+        off_nadir_axis_angle_deg = np.rad2deg(off_nadir_axis_angle)    
+
         obsv_metrics["ground pixel along-track resolution [m]"] = round(res_AT_m, 2)
         obsv_metrics["ground pixel cross-track resolution [m]"] = round(res_CT_m, 2)  
         obsv_metrics["accuracy [m]"] = accuracy
+        obsv_metrics["off-nadir axis angle [deg]"] = round(off_nadir_axis_angle_deg, 2)
 
         return obsv_metrics

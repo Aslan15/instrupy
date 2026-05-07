@@ -473,12 +473,12 @@ class PassiveOpticalScannerModel(Entity):
         else:    
             NEdeltaT = Nn/ deltaN     
 
-        # Solar zenith angle
-        [solar_zenith, solar_distance] = GeoUtilityFunctions.compute_sun_zenith(tObs_JDUT1, target_pos)
-        if solar_zenith is not None:
-            solar_zenith_deg =  np.rad2deg(solar_zenith)
-        else:
-            solar_zenith_deg = np.nan
+        # # Solar zenith angle
+        # [solar_zenith, solar_distance] = GeoUtilityFunctions.compute_sun_zenith(tObs_JDUT1, target_pos)
+        # if solar_zenith is not None:
+        #     solar_zenith_deg =  np.rad2deg(solar_zenith)
+        # else:
+        #     solar_zenith_deg = np.nan
 
         # assign sign to look-angle. 
         # positive sign => Positive sign => look is in positive half-space made by the orbit-plane (i.e. orbit plane normal vector) and vice-versa.
@@ -492,18 +492,26 @@ class PassiveOpticalScannerModel(Entity):
         # at off-nadir, so we compute each edge separately rather than doubling the center half-width.
         half_fov_rad = np.deg2rad(self.fieldOfView.sph_geom.angle_width / 2)
         swadth_width_km = alt_km * (np.tan(look_angle + half_fov_rad) - np.tan(look_angle - half_fov_rad))
+
+        # Calculate off-nadir axis angle
+        sc_nadir_axis = -1*MathUtilityFunctions.normalize(sc_pos)
+        range_projection_on_nadir = np.dot(range_vec_norm_km, sc_nadir_axis)
+        range_projection_on_orbit_normal = np.dot(range_vec_norm_km, MathUtilityFunctions.normalize(orbit_normal))
+        off_nadir_axis_angle = np.arctan2(range_projection_on_orbit_normal, range_projection_on_nadir)
+        off_nadir_axis_angle_deg = np.rad2deg(off_nadir_axis_angle)     
     
         obsv_metrics = {}
         obsv_metrics["observation range [km]"] = round(range_vec_norm_km,1)
         obsv_metrics["look angle [deg]"] = round(sgn*look_angle_deg, 2)
         obsv_metrics["incidence angle [deg]"] = round(incidence_angle_deg, 2)
-        obsv_metrics["solar zenith [deg]"] = round(solar_zenith_deg, 2)
+        # obsv_metrics["solar zenith [deg]"] = round(solar_zenith_deg, 2)
         obsv_metrics["ground pixel along-track resolution [m]"] = round(res_AT_m, 2)
         obsv_metrics["ground pixel cross-track resolution [m]"] = round(res_CT_m, 2)
         obsv_metrics["swath width [km]"] = round(swadth_width_km, 2)
         obsv_metrics["SNR"] = round(SNR, 2)
         obsv_metrics["dynamic range"] = round(DR, 2)
         obsv_metrics["noise-equivalent delta T [K]"] = round(NEdeltaT, 5)
+        obsv_metrics["off-nadir axis angle [deg]"] = round(off_nadir_axis_angle_deg, 2)
 
         return obsv_metrics
 

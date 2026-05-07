@@ -602,6 +602,16 @@ class SyntheticApertureRadarModel(Entity):
         #print("sc_gnd_speed_kmps", sc_gnd_speed_kmps)
         obsv_metrics = SyntheticApertureRadarModel.calc_data_metrics_impl1(self, alt_km, sc_speed_kmps, sc_gnd_speed_kmps, np.rad2deg(incidence_angle_rad), instru_look_angle_from_target_inc_angle)
 
+        # Calculate off-nadir axis angle
+        range_norm = MathUtilityFunctions.normalize(range_vector_km)
+        orbit_normal = np.cross(sc_pos_km, sc_vel_kmps)
+        sc_nadir_axis = -1*MathUtilityFunctions.normalize(sc_pos_km)
+        range_projection_on_nadir = np.dot(range_norm, sc_nadir_axis)
+        range_projection_on_orbit_normal = np.dot(range_norm, MathUtilityFunctions.normalize(orbit_normal))
+        off_nadir_axis_angle = np.arctan2(range_projection_on_orbit_normal, range_projection_on_nadir)
+        off_nadir_axis_angle_deg = np.rad2deg(off_nadir_axis_angle)   
+        obsv_metrics["off-nadir axis angle [deg]"] = round(off_nadir_axis_angle_deg, 2)
+
         return obsv_metrics
 
     def calc_data_metrics_impl1(self, alt_km, sc_speed_kmps, sc_gnd_speed_kmps, inc_angle_deg, instru_look_angle_from_target_inc_angle=False):
@@ -726,6 +736,9 @@ class SyntheticApertureRadarModel(Entity):
             rho_a = SyntheticApertureRadarModel.get_azimuthal_resolution(sc_speed_kmps, sc_gnd_speed_kmps, D_az)
             # modify in case of scansar (multiple sub-swaths => trading off azimuthal resolution)
             rho_a = rho_a*self.numSubSwaths
+            
+        # estimate the off-nadir axis angle
+        off_nadir_axis_angle_deg = np.rad2deg(instru_look_angle_rad)
              
         obsv_metrics = {}
         obsv_metrics["ground pixel along-track resolution [m]"] = round(rho_a, 2) if rho_a is not None else np.nan
@@ -734,6 +747,7 @@ class SyntheticApertureRadarModel(Entity):
         obsv_metrics["incidence angle [deg]"] = round(np.rad2deg(theta_i), 2) if theta_i is not None else np.nan
         obsv_metrics["swath-width [km]"] = round(W_gr_obs/1e3, 1) if W_gr_obs is not None else np.nan        
         obsv_metrics["PRF [Hz]"] = f_P_master
+        obsv_metrics["off-nadir axis angle [deg]"] = round(off_nadir_axis_angle_deg, 2)
 
         return obsv_metrics
 
