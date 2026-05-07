@@ -353,7 +353,7 @@ class PassiveOpticalScannerModel(Entity):
                 "apertureDia": self.apertureDia,
                 "Fnum": self.Fnum,
                 "maxDetectorExposureTime": self.maxDetectorExposureTime,
-                "atmosLossModel": self.atmosLossModel.value,
+                "atmosLossModel": self.atmosLossModel.value if self.atmosLossModel is not None else None,
                 "@id": self._id
                 })
 
