@@ -89,13 +89,13 @@ class AltimeterSensorModel(BasicSensorModel):
 
         # Calculate Target cartesian position in EARTH_CENTERED_INERTIAL frame
         target_pos = GeoUtilityFunctions.geo2eci([target_coords["lat [deg]"], target_coords["lon [deg]"], 0.0], tObs_JDUT1)
-        
-        #  Calculate the range vector between spacecraft and POI (Target)
-        range_vector_km = target_pos - sc_pos
 
         # Spacecraft position in Cartesian coordinates in the EARTH_CENTERED_INERTIAL frame
         sc_pos = np.array([sc_orbit_state["x [km]"], sc_orbit_state["y [km]"], sc_orbit_state["z [km]"]])  
         sc_vel = np.array([sc_orbit_state["vx [km/s]"], sc_orbit_state["vy [km/s]"], sc_orbit_state["vz [km/s]"]])  
+        
+        #  Calculate the range vector between spacecraft and POI (Target)
+        range_vector_km = target_pos - sc_pos
         
         # Ground track speed in km/s
         sat_speed_mps = GeoUtilityFunctions.compute_satellite_footprint_speed(sc_pos, sc_vel)

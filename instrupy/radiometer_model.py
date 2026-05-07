@@ -1877,9 +1877,10 @@ class RadiometerModel(Entity):
         swath_width_km = self.scan.compute_swath_width(alt_km, np.rad2deg(instru_look_angle), self.antenna.get_spherical_geometry(self.operatingFrequency))
                 
         # Calculate off-nadir axis angle
+        range_norm = MathUtilityFunctions.normalize(range_vector_km)
         sc_nadir_axis = -1*MathUtilityFunctions.normalize(sc_pos)
-        range_projection_on_nadir = np.dot(range_km, sc_nadir_axis)
-        range_projection_on_orbit_normal = np.dot(range_km, MathUtilityFunctions.normalize(orbit_normal))
+        range_projection_on_nadir = np.dot(range_norm, sc_nadir_axis)
+        range_projection_on_orbit_normal = np.dot(range_norm, MathUtilityFunctions.normalize(orbit_normal))
         off_nadir_axis_angle = np.arctan2(range_projection_on_orbit_normal, range_projection_on_nadir)
         off_nadir_axis_angle_deg = np.rad2deg(off_nadir_axis_angle) 
 

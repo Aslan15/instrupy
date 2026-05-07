@@ -495,8 +495,9 @@ class PassiveOpticalScannerModel(Entity):
 
         # Calculate off-nadir axis angle
         sc_nadir_axis = -1*MathUtilityFunctions.normalize(sc_pos)
-        range_projection_on_nadir = np.dot(range_vec_norm_km, sc_nadir_axis)
-        range_projection_on_orbit_normal = np.dot(range_vec_norm_km, MathUtilityFunctions.normalize(orbit_normal))
+        range_vec_unit = MathUtilityFunctions.normalize(range_vector_km)
+        range_projection_on_nadir = np.dot(range_vec_unit, sc_nadir_axis)
+        range_projection_on_orbit_normal = np.dot(range_vec_unit, MathUtilityFunctions.normalize(orbit_normal))
         off_nadir_axis_angle = np.arctan2(range_projection_on_orbit_normal, range_projection_on_nadir)
         off_nadir_axis_angle_deg = np.rad2deg(off_nadir_axis_angle)     
     

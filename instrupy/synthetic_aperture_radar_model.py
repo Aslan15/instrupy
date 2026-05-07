@@ -603,8 +603,8 @@ class SyntheticApertureRadarModel(Entity):
         obsv_metrics = SyntheticApertureRadarModel.calc_data_metrics_impl1(self, alt_km, sc_speed_kmps, sc_gnd_speed_kmps, np.rad2deg(incidence_angle_rad), instru_look_angle_from_target_inc_angle)
 
         # Calculate off-nadir axis angle
-        range_norm = MathUtilityFunctions.normalize(range_vector_km)
         orbit_normal = np.cross(sc_pos_km, sc_vel_kmps)
+        range_norm = MathUtilityFunctions.normalize(range_vector_km)
         sc_nadir_axis = -1*MathUtilityFunctions.normalize(sc_pos_km)
         range_projection_on_nadir = np.dot(range_norm, sc_nadir_axis)
         range_projection_on_orbit_normal = np.dot(range_norm, MathUtilityFunctions.normalize(orbit_normal))
